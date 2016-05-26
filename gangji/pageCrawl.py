@@ -5,8 +5,7 @@ from bs4 import BeautifulSoup
 # http://cn-proxy.com/
 proxy_list = [
     'http://117.177.250.151:8081',
-    'http://111.85.219.250:3129',
-    'http://122.70.183.138:8118',
+    'http://122.70.183.138:8118'
 ]
 proxy_ip = random.choice(proxy_list)  # 随机获取代理ip
 proxies = {'http': proxy_ip}
@@ -26,24 +25,25 @@ items_info = gangjiData['items_info']
 
 
 # 获取商品链接
-def get_url_from(channel, page, who_sells='o'):
-    url = '{}{}{}/'.format(channel, str(who_sells), str(page))
-    wb_data = requests.get(url, headers=headers, proxies=proxies)
-    time.sleep(2)
-    wb_data.encoding = 'utf-8'
-    soup = BeautifulSoup(wb_data.text, 'lxml')
-    if soup.find('ul', 'pageLink'):
-        links = soup.select('li.js-item a[href^="http://bj.ganji.com/"]')
-        print(len(links))
-        for l in links:
-            url_list.insert_one({'link': l.get('href')})
-            print(l.get('href'))
-    else:
-        pass  # 没有找到,说明页面到达尾部
+def get_all_url_from(channel, page, who_sells='o'):
+    count = 0
+    for i in range(1, page + 1):
+        url = '{}{}{}/'.format(channel, str(who_sells), str(i))
+        wb_data = requests.get(url, headers=headers)
+        time.sleep(2)
+        wb_data.encoding = 'utf-8'
+        soup = BeautifulSoup(wb_data.text, 'lxml')
+        if soup.find('ul', 'pageLink clearfix'):
+            links = soup.select('li.js-item a[href^="http://bj.ganji.com/"]')
+            count += 1
+            print(count)
+            for l in links:
+                url_list.insert_one({'link': l.get('href')})
+                print(l.get('href'))
+        else:
+            break  # 没有找到,说明页面到达尾部
 
-def get_all_url_from(channel):
-    for i in range(1,100):
-        get_url_from(channel,i)
+
 # 获取商品详情
 def get_iterms_from(url):
     wb_data = requests.get(url)
@@ -66,3 +66,4 @@ def get_iterms_from(url):
         items_info.insert_one(data)
 
 
+get_all_url_from('http://bj.ganji.com/jiaju/', page=7)
